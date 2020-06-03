@@ -4483,13 +4483,6 @@ static int wpa_driver_nl80211_set_ap(void *priv,
 	}
 #endif /* CONFIG_IEEE80211AX */
 
-	if (params->multiple_bssid_count) {
-		nla_put_u32(msg, NL80211_ATTR_MULTI_BSSID_INDEX,
-			    params->multiple_bssid_index);
-		nla_put_u32(msg, NL80211_ATTR_MULTI_BSSID_COUNT,
-			    params->multiple_bssid_count);
-	}
-
 	ret = send_and_recv_msgs_owner(drv, msg, get_connect_handle(bss), 1,
 				       NULL, NULL);
 	if (ret) {
@@ -5079,13 +5072,13 @@ const char * nl80211_iftype_str(enum nl80211_iftype mode)
 	}
 }
 
+
 static int nl80211_create_iface_once(struct wpa_driver_nl80211_data *drv,
 				     const char *ifname,
 				     enum nl80211_iftype iftype,
 				     const u8 *addr, int wds,
 				     int (*handler)(struct nl_msg *, void *),
-				     void *arg, int multiple_bssid_mode,
-				     const char *multiple_bssid_parent)
+				     void *arg)
 {
 	struct nl_msg *msg;
 	int ifidx;
@@ -5112,26 +5105,6 @@ static int nl80211_create_iface_once(struct wpa_driver_nl80211_data *drv,
 	} else if (wds) {
 		if (nla_put_u8(msg, NL80211_ATTR_4ADDR, wds))
 			goto fail;
-	}
-
-	switch (multiple_bssid_mode) {
-	case HOSTAPD_BSSID_TRANSMITTED:
-		nla_put_u8(msg, NL80211_ATTR_MULTI_BSSID_MODE,
-			   NL80211_MULTIPLE_BSSID_TRANSMITTED);
-		break;
-	case HOSTAPD_BSSID_NON_TRANSMITTED:
-		if (!multiple_bssid_parent)
-			goto fail;
-		ifidx = if_nametoindex(multiple_bssid_parent);
-		if (ifidx <= 0)
-			goto fail;
-		nla_put_u8(msg, NL80211_ATTR_MULTI_BSSID_MODE,
-			   NL80211_MULTIPLE_BSSID_NON_TRANSMITTED);
-		nla_put_u32(msg, NL80211_ATTR_MULTI_BSSID_PARENT,
-			    ifidx);
-		break;
-	default:
-		break;
 	}
 
 	/*
@@ -5187,14 +5160,12 @@ int nl80211_create_iface(struct wpa_driver_nl80211_data *drv,
 			 const char *ifname, enum nl80211_iftype iftype,
 			 const u8 *addr, int wds,
 			 int (*handler)(struct nl_msg *, void *),
-			 void *arg, int use_existing,
-			 int multiple_bssid_mode,
-			 const char *multiple_bssid_parent)
+			 void *arg, int use_existing)
 {
 	int ret;
 
 	ret = nl80211_create_iface_once(drv, ifname, iftype, addr, wds, handler,
-					arg, multiple_bssid_mode, multiple_bssid_parent);
+					arg);
 
 	/* if error occurred and interface exists already */
 	if (ret == -ENFILE && if_nametoindex(ifname)) {
@@ -5220,7 +5191,7 @@ int nl80211_create_iface(struct wpa_driver_nl80211_data *drv,
 
 		/* Try to create the interface again */
 		ret = nl80211_create_iface_once(drv, ifname, iftype, addr,
-						wds, handler, arg, multiple_bssid_mode, multiple_bssid_parent);
+						wds, handler, arg);
 	}
 
 	if (ret >= 0 && is_p2p_net_interface(iftype)) {
@@ -7155,7 +7126,7 @@ static int i802_set_wds_sta(void *priv, const u8 *addr, int aid, int val,
 		if (!if_nametoindex(name)) {
 			if (nl80211_create_iface(drv, name,
 						 NL80211_IFTYPE_AP_VLAN,
-						 bss->addr, 1, NULL, NULL, 0, 0, NULL) <
+						 bss->addr, 1, NULL, NULL, 0) <
 			    0)
 				return -1;
 			if (bridge_ifname &&
@@ -7502,8 +7473,7 @@ static int wpa_driver_nl80211_if_add(void *priv, enum wpa_driver_if_type type,
 				     void *bss_ctx, void **drv_priv,
 				     char *force_ifname, u8 *if_addr,
 				     const char *bridge, int use_existing,
-				     int setup_ap, int multiple_bssid_mode,
-				     const char *multiple_bssid_parent)
+				     int setup_ap)
 {
 	enum nl80211_iftype nlmode;
 	struct i802_bss *bss = priv;
@@ -7520,8 +7490,7 @@ static int wpa_driver_nl80211_if_add(void *priv, enum wpa_driver_if_type type,
 		os_memset(&p2pdev_info, 0, sizeof(p2pdev_info));
 		ifidx = nl80211_create_iface(drv, ifname, nlmode, addr,
 					     0, nl80211_wdev_handler,
-					     &p2pdev_info, use_existing,
-					     0, NULL);
+					     &p2pdev_info, use_existing);
 		if (!p2pdev_info.wdev_id_set || ifidx != 0) {
 			wpa_printf(MSG_ERROR, "nl80211: Failed to create a P2P Device interface %s",
 				   ifname);
@@ -7537,8 +7506,7 @@ static int wpa_driver_nl80211_if_add(void *priv, enum wpa_driver_if_type type,
 			   (long long unsigned int) p2pdev_info.wdev_id);
 	} else {
 		ifidx = nl80211_create_iface(drv, ifname, nlmode, addr,
-					     0, NULL, NULL, use_existing,
-					     multiple_bssid_mode, multiple_bssid_parent);
+					     0, NULL, NULL, use_existing);
 		if (use_existing && ifidx == -ENFILE) {
 			added = 0;
 			ifidx = if_nametoindex(ifname);

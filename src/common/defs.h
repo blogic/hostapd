@@ -471,11 +471,4 @@ enum ptk0_rekey_handling {
 	PTK0_REKEY_ALLOW_NEVER
 };
 
-
-enum hostapd_multi_bssid_mode {
-	HOSTAPD_BSSID_LEGACY = 0,
-	HOSTAPD_BSSID_TRANSMITTED,
-	HOSTAPD_BSSID_NON_TRANSMITTED,
-};
-
 #endif /* DEFS_H */

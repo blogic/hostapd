@@ -381,7 +381,7 @@ int nl80211_create_monitor_interface(struct wpa_driver_nl80211_data *drv)
 
 	drv->monitor_ifidx =
 		nl80211_create_iface(drv, buf, NL80211_IFTYPE_MONITOR, NULL,
-				     0, NULL, NULL, 0, 0, NULL);
+				     0, NULL, NULL, 0);
 
 	if (drv->monitor_ifidx == -EOPNOTSUPP) {
 		/*
