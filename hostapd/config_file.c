@@ -4657,6 +4657,8 @@ static int hostapd_config_fill(struct hostapd_config *conf,
 		}
 		bss->mka_psk_set |= MKA_PSK_SET_CKN;
 #endif /* CONFIG_MACSEC */
+	} else if (os_strcmp(buf, "multiple_bssid") == 0) {
+		conf->multiple_bssid = atoi(pos);
 	} else {
 		wpa_printf(MSG_ERROR,
 			   "Line %d: unknown configuration item '%s'",
