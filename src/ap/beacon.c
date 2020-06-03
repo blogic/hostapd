@@ -1500,6 +1500,10 @@ int ieee802_11_set_beacon(struct hostapd_data *hapd)
 	params.twt_responder = hostapd_get_he_twt_responder(hapd,
 							    IEEE80211_MODE_AP);
 #endif /* CONFIG_IEEE80211AX */
+        if (hapd->iconf->multiple_bssid) {
+		params.multiple_bssid_index = hostapd_get_bss_index(hapd);
+		params.multiple_bssid_count = iface->num_bss;
+	}
 	hapd->reenable_beacon = 0;
 
 	if (cmode &&

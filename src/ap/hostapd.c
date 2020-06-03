@@ -1129,6 +1129,13 @@ static int hostapd_setup_bss(struct hostapd_data *hapd, int first)
 
 	if (!first || first == -1) {
 		u8 *addr = hapd->own_addr;
+		int multiple_bssid_mode = HOSTAPD_BSSID_LEGACY;
+		const char *multiple_bssid_parent = NULL;
+
+		if (hapd->iconf->multiple_bssid) {
+			multiple_bssid_mode = HOSTAPD_BSSID_NON_TRANSMITTED;
+			multiple_bssid_parent = hapd->iface->bss[0]->conf->iface;
+		}
 
 		if (!is_zero_ether_addr(conf->bssid)) {
 			/* Allocate the configured BSSID. */
@@ -1156,7 +1163,7 @@ static int hostapd_setup_bss(struct hostapd_data *hapd, int first)
 				   conf->iface, addr, hapd,
 				   &hapd->drv_priv, force_ifname, if_addr,
 				   conf->bridge[0] ? conf->bridge : NULL,
-				   first == -1)) {
+				   first == -1, multiple_bssid_mode, multiple_bssid_parent)) {
 			wpa_printf(MSG_ERROR, "Failed to add BSS (BSSID="
 				   MACSTR ")", MAC2STR(hapd->own_addr));
 			hapd->interface_added = 0;
