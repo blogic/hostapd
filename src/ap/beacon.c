@@ -1038,7 +1038,7 @@ void handle_probe_req(struct hostapd_data *hapd,
 	wpa_msg_ctrl(hapd->msg_ctx, MSG_INFO, RX_PROBE_REQUEST "sa=" MACSTR
 		     " signal=%d", MAC2STR(mgmt->sa), ssi_signal);
 
-	resp = hostapd_gen_probe_resp(hapd, mgmt, elems.p2p != NULL,
+	resp = hostapd_gen_probe_resp(hostapd_get_primary_bss(hapd), mgmt, elems.p2p != NULL,
 				      &resp_len);
 	if (resp == NULL)
 		return;
@@ -1061,7 +1061,7 @@ void handle_probe_req(struct hostapd_data *hapd,
 				hapd->cs_c_off_ecsa_proberesp;
 	}
 
-	ret = hostapd_drv_send_mlme(hapd, resp, resp_len, noack,
+	ret = hostapd_drv_send_mlme(hostapd_get_primary_bss(hapd), resp, resp_len, noack,
 				    csa_offs_len ? csa_offs : NULL,
 				    csa_offs_len, 0);
 
