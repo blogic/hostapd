@@ -527,6 +527,9 @@ static u8 * hostapd_gen_probe_resp(struct hostapd_data *hapd,
 	pos = hostapd_eid_rm_enabled_capab(hapd, pos, epos - pos);
 	pos = hostapd_get_mde(hapd, pos, epos - pos);
 
+        if (hapd->iconf->multiple_bssid)
+		pos = hostapd_eid_multiple_bssid(hapd, pos);
+
 	/* eCSA IE */
 	csa_pos = hostapd_eid_ecsa(hapd, pos);
 	if (csa_pos != pos)
@@ -1245,6 +1248,9 @@ int ieee802_11_build_ap_params(struct hostapd_data *hapd,
 	tailpos = hostapd_eid_rm_enabled_capab(hapd, tailpos,
 					       tailend - tailpos);
 	tailpos = hostapd_get_mde(hapd, tailpos, tailend - tailpos);
+
+	if (hapd->iconf->multiple_bssid)
+		tailpos = hostapd_eid_multiple_bssid(hapd, tailpos);
 
 	/* eCSA IE */
 	csa_pos = hostapd_eid_ecsa(hapd, tailpos);
