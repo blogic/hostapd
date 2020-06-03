@@ -1507,6 +1507,13 @@ struct wpa_driver_ap_params {
 	 * twt_responder - Whether Target Wait Time responder is enabled
 	 */
 	int twt_responder;
+
+	/**
+	 * multiple_bssid_mode - The multi bssid mode
+	 */
+	 int multiple_bssid_mode;
+	 unsigned int multiple_bssid_index;
+	 unsigned int multiple_bssid_count;
 };
 
 struct wpa_driver_mesh_bss_params {
@@ -3234,8 +3241,8 @@ struct wpa_driver_ops {
 	int (*if_add)(void *priv, enum wpa_driver_if_type type,
 		      const char *ifname, const u8 *addr, void *bss_ctx,
 		      void **drv_priv, char *force_ifname, u8 *if_addr,
-		      const char *bridge, int use_existing, int setup_ap);
-
+		      const char *bridge, int use_existing, int setup_ap,
+		      int multi_bssid_mode, const char *multi_bssid_parent);
 	/**
 	 * if_remove - Remove a virtual interface
 	 * @priv: Private driver interface data

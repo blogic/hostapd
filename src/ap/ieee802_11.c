@@ -4371,7 +4371,7 @@ static void handle_assoc(struct hostapd_data *hapd,
 		goto fail;
 	omit_rsnxe = !get_ie(pos, left, WLAN_EID_RSNX);
 
-	if (hostapd_get_aid(hapd, sta) < 0) {
+	if (hostapd_get_aid(hostapd_get_primary_bss(hapd), sta) < 0) {
 		hostapd_logger(hapd, mgmt->sa, HOSTAPD_MODULE_IEEE80211,
 			       HOSTAPD_LEVEL_INFO, "No room for more AIDs");
 		resp = WLAN_STATUS_AP_UNABLE_TO_HANDLE_NEW_STA;

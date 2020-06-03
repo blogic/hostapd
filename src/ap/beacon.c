@@ -527,6 +527,9 @@ static u8 * hostapd_gen_probe_resp(struct hostapd_data *hapd,
 	pos = hostapd_eid_rm_enabled_capab(hapd, pos, epos - pos);
 	pos = hostapd_get_mde(hapd, pos, epos - pos);
 
+        if (hapd->iconf->multiple_bssid)
+		pos = hostapd_eid_multiple_bssid(hapd, pos);
+
 	/* eCSA IE */
 	csa_pos = hostapd_eid_ecsa(hapd, pos);
 	if (csa_pos != pos)
@@ -1035,7 +1038,7 @@ void handle_probe_req(struct hostapd_data *hapd,
 	wpa_msg_ctrl(hapd->msg_ctx, MSG_INFO, RX_PROBE_REQUEST "sa=" MACSTR
 		     " signal=%d", MAC2STR(mgmt->sa), ssi_signal);
 
-	resp = hostapd_gen_probe_resp(hapd, mgmt, elems.p2p != NULL,
+	resp = hostapd_gen_probe_resp(hostapd_get_primary_bss(hapd), mgmt, elems.p2p != NULL,
 				      &resp_len);
 	if (resp == NULL)
 		return;
@@ -1058,7 +1061,7 @@ void handle_probe_req(struct hostapd_data *hapd,
 				hapd->cs_c_off_ecsa_proberesp;
 	}
 
-	ret = hostapd_drv_send_mlme(hapd, resp, resp_len, noack,
+	ret = hostapd_drv_send_mlme(hostapd_get_primary_bss(hapd), resp, resp_len, noack,
 				    csa_offs_len ? csa_offs : NULL,
 				    csa_offs_len, 0);
 
@@ -1245,6 +1248,9 @@ int ieee802_11_build_ap_params(struct hostapd_data *hapd,
 	tailpos = hostapd_eid_rm_enabled_capab(hapd, tailpos,
 					       tailend - tailpos);
 	tailpos = hostapd_get_mde(hapd, tailpos, tailend - tailpos);
+
+	if (hapd->iconf->multiple_bssid)
+		tailpos = hostapd_eid_multiple_bssid(hapd, tailpos);
 
 	/* eCSA IE */
 	csa_pos = hostapd_eid_ecsa(hapd, tailpos);
@@ -1500,6 +1506,10 @@ int ieee802_11_set_beacon(struct hostapd_data *hapd)
 	params.twt_responder = hostapd_get_he_twt_responder(hapd,
 							    IEEE80211_MODE_AP);
 #endif /* CONFIG_IEEE80211AX */
+        if (hapd->iconf->multiple_bssid) {
+		params.multiple_bssid_index = hostapd_get_bss_index(hapd);
+		params.multiple_bssid_count = iface->num_bss;
+	}
 	hapd->reenable_beacon = 0;
 
 	if (cmode &&

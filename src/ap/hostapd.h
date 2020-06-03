@@ -595,6 +595,8 @@ struct hostapd_iface {
 int hostapd_for_each_interface(struct hapd_interfaces *interfaces,
 			       int (*cb)(struct hostapd_iface *iface,
 					 void *ctx), void *ctx);
+int hostapd_get_bss_index(struct hostapd_data *hapd);
+struct hostapd_data * hostapd_get_primary_bss(struct hostapd_data *hapd);
 int hostapd_reload_config(struct hostapd_iface *iface);
 void hostapd_reconfig_encryption(struct hostapd_data *hapd);
 struct hostapd_data *

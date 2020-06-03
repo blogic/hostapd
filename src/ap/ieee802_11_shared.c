@@ -6,6 +6,7 @@
  * See README for more details.
  */
 
+#include <math.h>
 #include "utils/includes.h"
 
 #include "utils/common.h"
@@ -356,6 +357,8 @@ static void hostapd_ext_capab_byte(struct hostapd_data *hapd, u8 *pos, int idx)
 			*pos |= 0x02; /* Bit 17 - WNM-Sleep Mode */
 		if (hapd->conf->bss_transition)
 			*pos |= 0x08; /* Bit 19 - BSS Transition */
+		if (hapd->iconf->multiple_bssid)
+                        *pos |= 0x40; /* Bit 22 - Multiple BSSID */
 		break;
 	case 3: /* Bits 24-31 */
 #ifdef CONFIG_WNM_AP
@@ -1121,4 +1124,48 @@ u8 * hostapd_eid_rsnxe(struct hostapd_data *hapd, u8 *eid, size_t len)
 	pos++;
 
 	return pos;
+}
+
+
+u8 * hostapd_eid_multiple_bssid(struct hostapd_data *hapd, u8 *eid)
+{
+	u8 *size_offset;
+	int i;
+
+	*eid++ = WLAN_EID_MULTIPLE_BSSID;
+	size_offset = eid++;
+	*eid = (u8)ceil(log2(hapd->iface->num_bss));
+	if (*eid < 2)
+		*eid = 2;
+	eid++;
+
+	for (i = 1; i < hapd->iface->num_bss; i++) {
+		struct hostapd_data *bss = hapd->iface->bss[i];
+		u8 *bss_size_offset;
+		u16 capab_info;
+
+		*eid++ = WLAN_EID_SUBELEMENT_NONTRANSMITTED_BSSID_PROFILE;
+		bss_size_offset = eid++;
+
+		*eid++ = WLAN_EID_NONTRANSMITTED_BSSID_CAPA;
+		*eid++ = sizeof(capab_info);
+		capab_info = host_to_le16(hostapd_own_capab_info(bss));
+		os_memcpy(eid, (const void*)&capab_info, sizeof(capab_info));
+		eid += sizeof(capab_info);
+
+		*eid++ = WLAN_EID_SSID;
+		*eid++ = bss->conf->ssid.ssid_len;
+		os_memcpy(eid, bss->conf->ssid.ssid, bss->conf->ssid.ssid_len);
+		eid += bss->conf->ssid.ssid_len;
+
+		*eid++ = WLAN_EID_MULTIPLE_BSSID_INDEX;
+		*eid++ = 1;
+		*eid++ = i;
+
+		*bss_size_offset = (eid - bss_size_offset) - 1;
+	}
+
+	*size_offset = (eid - size_offset) - 1;
+
+  return eid;
 }
